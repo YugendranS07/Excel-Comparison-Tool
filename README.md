@@ -129,6 +129,23 @@ This directly addresses one of the most common and costly gaps in data migration
 
 ---
 
+## 📁 Sample Files (For Reference)
+
+To make it easy to understand exactly how this tool behaves on a realistic dataset, I've uploaded a **sample file package containing 10,000 records** alongside this project. It includes:
+
+| File | Description |
+|---|---|
+| `Source_File_Account_Details.xlsx` | 10,000 sample source account records (names, account numbers, emails, phone numbers, status, active flag, created date, balance, region, notes) |
+| `OrgData_Account.xlsx` | The corresponding "migrated" version of the same 10,000 records — with row order intentionally shuffled to prove that matching happens by **Source ID**, not by row position |
+| `Account_Mapping.xlsx` | The field mapping file used to tell the tool which Source column corresponds to which OrgData column |
+| `Sample_Comparison_Output.xlsx` | The **actual output** produced by running this tool against the above three files — included purely as a reference so you can see the Summary, Comparison, and mismatch sheets without having to run anything yourself |
+
+The sample data intentionally includes realistic migration issues — flipped status flags, dropped emails, reformatted phone numbers, rounding differences in balances, shifted dates, and formatting differences like `Y`/`N` vs `TRUE`/`FALSE` — so the output report tells a genuine, believable validation story rather than showing a dataset that matches perfectly by default.
+
+You're welcome to open the sample output file directly to see exactly what the tool produces before running it on your own data.
+
+---
+
 ## 🚀 Usage
 
 ### Requirements
