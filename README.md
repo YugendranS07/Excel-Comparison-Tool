@@ -1,166 +1,179 @@
-# 🧮 Excel Comparison Tool
+# Excel Comparison Tool (Source vs Org Data)
 
-A lightweight yet powerful **Python automation utility** that compares data between two Excel files — typically a *Source* and an *Org Data* file — using a configurable *Mapping file*.
-It’s designed to help QA engineers, analysts, and developers quickly validate data migrations or integration consistency.
+**Author:** Yugendran S
+**License:** MIT
 
----
-
-## 🚀 Overview
-
-The **Excel Comparison Tool** identifies field-level mismatches between two Excel datasets and generates a comprehensive Excel output containing:
-
-- ✅ **Summary Sheet** — Pass/Fail status with total match & mismatch counts
-- 📊 **Comparison Sheet** — record-by-record comparison between Source and Org Data
-- ❌ **Failed Record Sheets** — rows and fields that didn’t match
-- 🎨 **Color-coded output** — green for Pass, red for Fail for easy visual review
-
-> Perfect for **data validation**, **migration QA**, and **cross-system reconciliation**.
+A Python-based automation tool that validates large-scale data migrations by comparing a **Source Excel file** against a **Target/Org Data Excel file**, using a configurable **Mapping file** to determine which fields correspond to each other. It produces a single, structured Excel report covering summary results, full field-by-field comparison, and isolated mismatch details.
 
 ---
 
-## 🧩 How It Works
+## 📌 The Problem This Tool Solves
 
-1. Reads all sheets from both Excel files (Source and Org Data)
-2. Maps fields based on a provided mapping file
-3. Compares each record using `Source ID` as the key
-4. Treats blanks, boolean equivalents (`Y/1`, `N/0`), and matching values as *True Matches*
-5. Generates an **Excel report** with detailed insights, summaries, and color formatting
+### The Real-World Business Pain Point
 
----
+In most data migration projects — moving data from a legacy system to a new system, or from a source system to an org/target system — the business needs assurance that the migrated data is **accurate, complete, and unchanged in meaning**, even if it has changed in structure or format.
 
-## 📂 Input Files
+This sounds simple in theory. In practice, it becomes one of the most time-consuming and error-prone parts of any migration project, for the following reasons:
 
-| File | Purpose | Required Columns |
-|------|----------|------------------|
-| `Source_File_Account_details.xlsx` | The *Source* dataset | `Source ID` + mapped columns |
-| `OrgData_Account.xlsx` | The *Org Data* dataset | `Source ID` + mapped columns |
-| `Account_Mapping.xlsx` | Defines field relationships between Source and Org Data | `Source_Column`, `OrgData_Column` |
+#### 1. Volume of data makes manual testing impossible
+Source files in real migration projects often contain **hundreds of thousands to millions of records**, spread across multiple columns and sheets. Manually opening two Excel files side-by-side and comparing values row by row simply does not scale.
 
-> ⚠️ Ensure both Excel files include the column **`Source ID`** as the unique key.
+- Validating a few hundred rows manually? Feasible.
+- Validating a few thousand rows? Painful, but doable with effort.
+- Validating **millions** of rows, across dozens of mapped columns? **Not humanly possible** within any reasonable project timeline.
 
----
+#### 2. Testers are forced into sampling — and sampling hides risk
+Because full manual validation isn't feasible, testers/QA teams fall back on **random sampling**: pick a small subset of records (say, 50–100 out of millions) and manually verify those.
 
-## 🧠 Key Features
+This creates a serious, often unspoken risk:
 
-- Reads **all sheets automatically** from both workbooks
-- Handles **boolean equivalence** (`Y ↔ 1`, `N ↔ 0`, etc.)
-- Treats **blank vs blank** as a match
-- Supports **partial text containment** for fuzzy matching
-- Produces a **multi-sheet output Excel report**
-- Auto-applies **filters & color formatting** in the Summary sheet
-- Entity/Cycle name used: **Object - Validation**
+> **The records that are *not* tested might be exactly the ones that contain errors.**
 
----
+A sampled test can pass with flying colors while thousands of untested records downstream are corrupted, mismatched, or incorrectly transformed — and nobody finds out until it surfaces in production, sometimes weeks or months later, when it's far more expensive to fix.
 
-## 🧾 Example Output
+#### 3. Timelines suffer
+Even partial manual validation efforts can stretch to **weeks or months** depending on data volume, especially when testers have to re-check after every new data drop, mapping change, or system update. This directly delays go-live decisions and increases pressure on QA teams to "just sign off" without full confidence.
 
-### 🟢 Summary Sheet
+#### 4. Inconsistent data representations cause false mismatches
+Even when data *is* correct, differences in formatting between source and target systems create noise:
+- `Y` vs `1` vs `TRUE` — logically the same, but textually different
+- Blank vs `NULL` vs empty string — often meant to represent the same "no value" state
+- Case sensitivity, whitespace, and partial/substring matches (e.g., a code embedded inside a longer descriptive string)
 
-| Source Field | OrgData Field | Total | Matches | Mismatches | Outcome |
-|---------------|---------------|--------|----------|-------------|----------|
-| Account Name | Account Name | 3 | 2 | 1 | ❌ Fail |
-| Status | Status | 3 | 2 | 1 | ❌ Fail |
-| Active | Active | 3 | 3 | 0 | ✅ Pass |
-| **TOTAL** | | **9** | **7** | **2** |  |
+Manual testers have to mentally account for all of this every time they compare two cells — which is both slow and inconsistent from tester to tester.
 
-> 🟢 Green = Pass 🔴 Red = Fail
+#### 5. Lack of a structured, auditable report
+Even when manual testing is completed, the output is often just tester notes, screenshots, or a scattered set of spreadsheet comments — not a clean, structured artifact that stakeholders can review, audit, or use as documented sign-off evidence.
 
 ---
 
-### 📊 Comparison Sheet
+## 💡 The Solution
 
-| Source ID | Account Name (Source) | Account Name (OrgData) | Match |
-|------------|----------------------|------------------------|--------|
-| 101 | ABC Corp | ABC Corporation | False |
-| 102 | XYZ Inc | XYZ Inc | True |
-| 103 | LMN Pvt Ltd | LMN Pvt Ltd | True |
+Instead of relying on manual, partial, sample-based testing, this tool performs **100% automated validation** of every record and every mapped field — completing in **minutes** what would otherwise take **weeks or months** manually.
 
----
+### Core Idea
+Give the tool three inputs:
+1. **Source File** — the original/legacy data
+2. **Org Data File** — the migrated/target data
+3. **Mapping File** — a simple two-column file defining which Source column maps to which Org Data column
 
-### ❌ Failed Record Sheet
-
-| Source ID | Account Name (Source) | Account Name (OrgData) | OrgData Contains Source |
-|------------|----------------------|------------------------|--------------------------|
-| 101 | ABC Corp | ABC Corporation | True |
-
----
-
-## ⚙️ Installation & Usage
-
-### Step 1 — Clone the repository
-
-```bash
-git clone https://github.com/YugendranS07/Excel-Comparison-Tool.git
-cd Excel-Comparison-Tool
-```
-
-### Step 2 — Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### Step 3 — Run the tool
-
-```bash
-python excel_comparator.py
-```
-
-This generates an Excel output file named `comparison_output.xlsx`.
+The tool then automatically:
+- Matches every record between both files using a unique **Source ID**, regardless of row order or which sheet the data sits in
+- Compares every mapped field for every matched record — not a sample, **all of it**
+- Intelligently normalizes values so that formatting differences (Y/N, 1/0, TRUE/FALSE, blank vs blank) don't produce false mismatches
+- Flags genuine mismatches only, with an additional "contains" check to catch partial/substring matches that a strict equality check would incorrectly flag as failed
+- Outputs everything into one clean, structured, color-coded Excel workbook
 
 ---
 
-## 🧩 Project Structure
+## ⚙️ How It Works (Technical Overview)
 
-```
-Excel-Comparison-Tool/
-├── excel_comparator.py
-├── requirements.txt
-├── README.md
-└── sample_files/
-    ├── Source_File_Account_details.xlsx
-    ├── OrgData_Account.xlsx
-    ├── Account_Mapping.xlsx
-```
+### Inputs
+| File | Purpose |
+|---|---|
+| `Source_File_*.xlsx` | The original data before migration |
+| `OrgData_*.xlsx` | The migrated/target data after migration |
+| `Mapping_File.xlsx` | Two columns: `Source_Column`, `OrgData_Column` — defines field-to-field correspondence |
+
+### Processing Steps
+1. **Read all sheets** from both the Source and Org Data files and combine them into unified DataFrames using `pandas` + `openpyxl`.
+2. **Deduplicate and index** both datasets by a unique `Source ID` column, so records can be reliably matched regardless of row order.
+3. **Validate the mapping file** — only mapped column pairs that actually exist in both files are used for comparison; invalid/missing mappings are automatically skipped.
+4. **Find common Source IDs** between both files (the intersection) — these are the records eligible for comparison.
+5. **Field-by-field comparison** for every mapped column across every common record:
+   - Normalizes boolean-like values (`Y`/`N`, `1`/`0`, `TRUE`/`FALSE`, `NULL`, blank) into a consistent form before comparing
+   - Treats blank-vs-blank as a match (no false failures from missing values on both sides)
+   - Falls back to a **substring "contains" check** when exact values don't match but one value is logically contained within the other
+6. **Aggregate results** into:
+   - Per-field match/mismatch counts
+   - Overall Pass/Fail outcome per field
+   - A grand total row summarizing the entire comparison run
+
+### Output — Single Excel Workbook
+| Sheet | Contents |
+|---|---|
+| **Summary** | One row per mapped field pair, showing Total Records, Matched Count, Mismatched Count, and Outcome (Pass/Fail) — with **color-coded highlighting** (green = pass, red = fail) for instant visual triage |
+| **Comparison** | The complete side-by-side comparison of every field for every record — the full audit trail |
+| **`<Field>_vs_<Field>`** (one per mismatched field pair) | Isolated sheets showing *only* the genuinely mismatched records for that specific field pair, so testers can jump directly to what needs investigation instead of scrolling through millions of matched rows |
+
+All sheets have **auto-filters** applied automatically for fast, on-the-fly filtering and sorting.
 
 ---
 
-## 🧪 Requirements
+## 🎯 Key Design Decisions & Accepted Behaviors
 
-- Python ≥ 3.8
-- pandas
-- openpyxl
+These behaviors were deliberately built in based on real testing edge cases encountered during use:
 
-Install manually with:
+- ✅ Records are matched by **Source ID**, independent of row order in either file
+- ✅ All fields for a given Source ID are consolidated into a **single row** in the Comparison output — no fragmented per-field rows
+- ✅ **Blank vs blank** is treated as a match, not a mismatch
+- ✅ **`Y`/`N`** are treated as equivalent to **`1`/`0`** and **`TRUE`/`FALSE`**
+- ✅ Original Excel formats (especially **dates**) are preserved rather than being reformatted or corrupted during processing
+- ✅ Literal **`'null'`** string values are preserved as-is, not silently converted to blanks — since in some systems, `'null'` is a meaningful data value, not an absence of data
+- ✅ Sheet names are automatically sanitized to remove invalid Excel characters and truncated to Excel's 31-character sheet name limit
+
+---
+
+## 📈 Real-World Impact
+
+| Traditional Manual Testing | This Tool |
+|---|---|
+| Samples a small subset of records | Validates **100% of records** |
+| Takes **weeks to months** for large datasets | Runs in **minutes** |
+| Risk of undetected errors in untested records | **No blind spots** — every record, every field, checked |
+| Inconsistent handling of formatting differences (Y/N, blanks, nulls) across testers | **Consistent, automated normalization** logic every time |
+| Manual notes/screenshots as "evidence" | Structured, color-coded, auditable **Excel report** |
+| Re-testing after every data refresh is a fresh manual effort | Re-run the script in minutes after any new data drop |
+
+This directly addresses one of the most common and costly gaps in data migration QA: **the false confidence created by sample-based testing**, where the untested majority of records could be silently carrying errors into production.
+
+---
+
+## 🚀 Usage
+
+### Requirements
 ```bash
 pip install pandas openpyxl
 ```
 
----
+### Configuration
+Edit the config section at the top of the script:
 
-## 💡 Example Use Cases
+```python
+SOURCE_FILE = "sample_files/Source_File_Account_details.xlsx"
+ORG_DATA_FILE = "sample_files/OrgData_Account.xlsx"
+MAPPING_FILE = "sample_files/Account_Mapping.xlsx"
+OUTPUT_FILE = "comparison_output.xlsx"
+ENTITY_NAME = "Object - Validation"
+SOURCE_ID_COL = "Source ID"
+```
 
-- Validating post-migration data between systems
-- Comparing Source vs Target after ETL transformations
-- Checking mapping consistency in crosswalk files
-- QA testing for data warehouse or integration projects
+### Run
+```bash
+python excel_comparator.py
+```
 
----
-
-## 🏷️ License
-
-This project is licensed under the **MIT License** — free to use, share, and modify.
-
----
-
-## ✨ Author
-
-**Yugendran S**
-_Data QA | Automation Engineer_  
-📧 [LinkedIn Profile](https://www.linkedin.com/in/yugendran07/)
+### Output
+A single file, `comparison_output.xlsx`, containing the Summary, Comparison, and per-field mismatch sheets described above.
 
 ---
 
-## ❤️ Acknowledgments
+## 🔮 Potential Future Enhancements
 
-Special thanks to data QA professionals who inspired the idea behind automating field-level Excel comparisons — saving hours of manual validation work every day.
+- Configurable matching logic beyond substring "contains" checks (e.g., fuzzy matching, tolerance thresholds for numeric fields)
+- Command-line arguments / config file support instead of hardcoded paths
+- Support for very large datasets via chunked processing to reduce memory usage
+- HTML/PDF report generation alongside the Excel output
+- Email or Slack notification integration for automated CI-based validation runs
+
+---
+
+## 📄 License
+
+MIT License — free to use, modify, and distribute.
+
+---
+
+## 🔗 Repository
+
+[https://github.com/YugendranS07/Excel-Comparison-Tool](https://github.com/YugendranS07/Excel-Comparison-Tool/tree/main)
